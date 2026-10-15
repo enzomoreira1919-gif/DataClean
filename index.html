@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DataClean: aprenda na prática como aplicar a 1FN, 2FN e 3FN para construir bancos de dados relacionais mais consistentes.">
+  <meta name="theme-color" content="#0b1020">
+  <title>DataClean — Normalização de Banco de Dados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="DataClean - início">
+      <span class="brand-mark" aria-hidden="true">D<span>.</span></span>
+      <span>Data<span class="brand-light">Clean</span></span>
+    </a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <nav class="nav-links" id="navLinks" aria-label="Navegação principal">
+      <a href="#conceitos">Conceitos</a>
+      <a href="#laboratorio">Laboratório SQL</a>
+      <a href="#quiz">Quiz</a>
+      <a href="#referencias">Referências</a>
+      <a class="nav-cta" href="#exemplo">Ver exemplo <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero section-wrap" id="inicio">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> GUIA PRÁTICO DE MODELAGEM DE DADOS</div>
+        <h1>Dados organizados.<br><span class="gradient-text">Sistemas confiáveis.</span></h1>
+        <p class="hero-description">Entenda como a 1FN, 2FN e 3FN ajudam a reduzir redundâncias, evitar inconsistências e construir bancos de dados relacionais mais fáceis de manter.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#exemplo">Explorar o exemplo <span aria-hidden="true">→</span></a>
+          <a class="button button-ghost" href="#conceitos">Aprender os conceitos</a>
+        </div>
+        <div class="hero-proof">
+          <div class="proof-icon" aria-hidden="true">⌘</div>
+          <div><strong>Aprenda fazendo</strong><span>Exemplo fictício + SQL para PostgreSQL</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" role="img" aria-label="Ilustração abstrata de tabelas de banco de dados conectadas">
+        <div class="visual-topline"><span></span><span></span><span></span><small>DATABASE / STRUCTURE</small></div>
+        <div class="schema-card schema-main">
+          <div class="schema-heading"><span class="table-icon">▦</span><div><strong>pedido_original</strong><small>Tabela não normalizada</small></div><span class="warning-pill">REDUNDÂNCIA</span></div>
+          <div class="schema-row"><span>pedido_id</span><b>1042</b></div>
+          <div class="schema-row"><span>cliente</span><b>Marina Alves</b></div>
+          <div class="schema-row duplicate"><span>produtos</span><b>Teclado, Mouse</b></div>
+          <div class="schema-row"><span>cidade</span><b>São Paulo</b></div>
+        </div>
+        <div class="connector" aria-hidden="true">↓</div>
+        <div class="schema-bottom">
+          <div class="mini-table"><span class="mini-icon">▦</span><strong>clientes</strong><small>cliente_id · nome</small></div>
+          <div class="mini-table"><span class="mini-icon">▦</span><strong>pedidos</strong><small>pedido_id · cliente_id</small></div>
+          <div class="mini-table"><span class="mini-icon">▦</span><strong>itens_pedido</strong><small>pedido_id · produto_id</small></div>
+        </div>
+        <div class="visual-caption"><span class="caption-check">✓</span> Estrutura clara, dados consistentes</div>
+      </div>
+    </section>
+
+    <section class="stats-strip section-wrap" aria-label="Resumo do conteúdo">
+      <div><strong>01</strong><span>Valores atômicos</span></div>
+      <div><strong>02</strong><span>Dependência da chave inteira</span></div>
+      <div><strong>03</strong><span>Sem dependências transitivas indevidas</span></div>
+      <div><strong>SQL</strong><span>Exemplos para PostgreSQL</span></div>
+    </section>
+
+    <section class="section-wrap content-section" id="problema">
+      <div class="section-heading">
+        <div class="eyebrow">01 / O PROBLEMA</div>
+        <h2>Quando uma tabela começa a atrapalhar?</h2>
+        <p>Imagine uma loja que registra o pedido, o cliente e todos os produtos em uma única linha. Parece simples no início, mas os mesmos dados acabam repetidos e difíceis de atualizar.</p>
+      </div>
+      <div class="problem-grid">
+        <article class="problem-card">
+          <div class="problem-icon icon-red" aria-hidden="true">↻</div>
+          <h3>Anomalia de atualização</h3>
+          <p>Se o endereço do cliente aparece em dez linhas, é preciso corrigir todas. Uma linha esquecida deixa o banco inconsistente.</p>
+        </article>
+        <article class="problem-card">
+          <div class="problem-icon icon-amber" aria-hidden="true">＋</div>
+          <h3>Anomalia de inserção</h3>
+          <p>Talvez não seja possível cadastrar um produto antes de existir um pedido, porque as informações estão misturadas.</p>
+        </article>
+        <article class="problem-card">
+          <div class="problem-icon icon-blue" aria-hidden="true">×</div>
+          <h3>Anomalia de exclusão</h3>
+          <p>Ao excluir o único pedido de um produto, informações sobre o próprio produto podem desaparecer junto.</p>
+        </article>
+      </div>
+      <p class="note"><strong>Importante:</strong> os nomes, clientes, pedidos e produtos deste projeto são fictícios e servem apenas para fins didáticos.</p>
+    </section>
+
+    <section class="section-wrap content-section" id="conceitos">
+      <div class="section-heading">
+        <div class="eyebrow">02 / OS CONCEITOS</div>
+        <h2>Três etapas para organizar os dados</h2>
+        <p>Vamos usar um mesmo exemplo e evoluir a estrutura passo a passo. As formas normais são regras de organização baseadas nas relações entre os atributos.</p>
+      </div>
+      <div class="normalization-list">
+        <article class="normalization-card">
+          <div class="normalization-number">1FN</div>
+          <div class="normalization-content">
+            <div class="card-kicker">PRIMEIRA FORMA NORMAL</div>
+            <h3>Um valor por campo</h3>
+            <p>Cada coluna deve guardar um valor atômico para cada linha, sem listas de produtos ou grupos repetidos dentro de uma célula.</p>
+            <div class="before-after">
+              <div class="sample bad"><span>✕ Antes</span><code>produtos = "Mouse, Teclado"</code></div>
+              <div class="sample good"><span>✓ Depois</span><code>uma linha para cada item</code></div>
+            </div>
+          </div>
+          <div class="normalization-tag">Atomicidade</div>
+        </article>
+        <article class="normalization-card">
+          <div class="normalization-number">2FN</div>
+          <div class="normalization-content">
+            <div class="card-kicker">SEGUNDA FORMA NORMAL</div>
+            <h3>Depender da chave inteira</h3>
+            <p>A tabela precisa estar na 1FN e cada atributo não-chave deve depender da chave candidata inteira, não apenas de uma parte de uma chave composta.</p>
+            <div class="before-after">
+              <div class="sample bad"><span>✕ Antes</span><code>(pedido_id, produto_id) → nome_produto</code></div>
+              <div class="sample good"><span>✓ Depois</span><code>produto_id → nome_produto</code></div>
+            </div>
+          </div>
+          <div class="normalization-tag">Sem dependência parcial</div>
+        </article>
+        <article class="normalization-card">
+          <div class="normalization-number">3FN</div>
+          <div class="normalization-content">
+            <div class="card-kicker">TERCEIRA FORMA NORMAL</div>
+            <h3>Evitar dependências transitivas</h3>
+            <p>A tabela precisa estar na 2FN. Atributos não-chave devem depender da chave, da chave inteira e de nada além da chave — sem depender de outro atributo não-chave.</p>
+            <div class="before-after">
+              <div class="sample bad"><span>✕ Antes</span><code>pedido_id → cliente_id → nome_cliente</code></div>
+              <div class="sample good"><span>✓ Depois</span><code>nome_cliente fica em clientes</code></div>
+            </div>
+          </div>
+          <div class="normalization-tag">Sem dependência transitiva</div>
+        </article>
+      </div>
+      <div class="definition-box">
+        <div class="definition-symbol" aria-hidden="true">ƒ</div>
+        <div><strong>Aprofundamento: dependência funcional</strong><p>Escrevemos <code>X → Y</code> quando o valor de X determina unicamente o valor de Y dentro da relação. Uma chave primária identifica cada linha; uma chave estrangeira referencia uma chave de outra tabela.</p></div>
+      </div>
+    </section>
+
+    <section class="section-wrap content-section" id="exemplo">
+      <div class="section-heading">
+        <div class="eyebrow">03 / EXEMPLO PRÁTICO</div>
+        <h2>Da planilha repetida ao modelo relacional</h2>
+        <p>Observe os dados fictícios de uma loja. O mesmo cliente e o mesmo produto podem aparecer em diversos pedidos, criando repetição desnecessária.</p>
+      </div>
+      <div class="table-panel">
+        <div class="panel-header"><div><span class="panel-label">ANTES</span><h3>pedido_original</h3></div><span class="panel-meta">Estrutura simplificada</span></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>pedido_id</th><th>cliente</th><th>cidade</th><th>produtos</th><th>total</th></tr></thead>
+            <tbody>
+              <tr><td>1001</td><td>Marina Alves</td><td>São Paulo</td><td><span class="cell-warning">Mouse, Teclado</span></td><td>350,00</td></tr>
+              <tr><td>1002</td><td>Marina Alves</td><td>São Paulo</td><td><span class="cell-warning">Monitor</span></td><td>900,00</td></tr>
+              <tr><td>1003</td><td>Caio Mendes</td><td>Santos</td><td><span class="cell-warning">Mouse</span></td><td>120,00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel-footer"><span class="status-bullet warning"></span> Listas dentro de células e dados de clientes repetidos.</div>
+      </div>
+      <div class="transformation-arrow" aria-hidden="true"><span>↓</span><small>DECOMPOR COM CRITÉRIO</small></div>
+      <div class="normalized-grid">
+        <div class="table-panel normalized-panel">
+          <div class="panel-header"><div><span class="panel-label success-label">TABELA 1</span><h3>clientes</h3></div></div>
+          <div class="table-scroll"><table><thead><tr><th>cliente_id</th><th>nome</th><th>cidade</th></tr></thead><tbody><tr><td>1</td><td>Marina Alves</td><td>São Paulo</td></tr><tr><td>2</td><td>Caio Mendes</td><td>Santos</td></tr></tbody></table></div>
+          <div class="panel-footer"><span class="key-chip">PK</span> cliente_id</div>
+        </div>
+        <div class="table-panel normalized-panel">
+          <div class="panel-header"><div><span class="panel-label success-label">TABELA 2</span><h3>pedidos</h3></div></div>
+          <div class="table-scroll"><table><thead><tr><th>pedido_id</th><th>cliente_id</th><th>data</th></tr></thead><tbody><tr><td>1001</td><td>1</td><td>2026-10-01</td></tr><tr><td>1002</td><td>1</td><td>2026-10-02</td></tr><tr><td>1003</td><td>2</td><td>2026-10-03</td></tr></tbody></table></div>
+          <div class="panel-footer"><span class="key-chip">PK</span> pedido_id <span class="key-chip foreign">FK</span> cliente_id</div>
+        </div>
+        <div class="table-panel normalized-panel">
+          <div class="panel-header"><div><span class="panel-label success-label">TABELA 3</span><h3>itens_pedido</h3></div></div>
+          <div class="table-scroll"><table><thead><tr><th>pedido_id</th><th>produto_id</th><th>quantidade</th></tr></thead><tbody><tr><td>1001</td><td>10</td><td>1</td></tr><tr><td>1001</td><td>11</td><td>1</td></tr><tr><td>1002</td><td>12</td><td>1</td></tr><tr><td>1003</td><td>10</td><td>1</td></tr></tbody></table></div>
+          <div class="panel-footer"><span class="key-chip">PK composta</span> pedido_id + produto_id</div>
+        </div>
+      </div>
+      <p class="note">O exemplo visual é didático. O script SQL completo inclui também a tabela <code>produtos</code>, preços, itens e consultas para conferir os resultados.</p>
+    </section>
+
+    <section class="section-wrap content-section" id="laboratorio">
+      <div class="section-heading">
+        <div class="eyebrow">04 / LABORATÓRIO SQL</div>
+        <h2>Veja a estrutura em código</h2>
+        <p>O exemplo foi escrito para PostgreSQL. Copie o script para um banco de testes vazio ou abra o arquivo completo no repositório.</p>
+      </div>
+      <div class="code-window">
+        <div class="code-toolbar"><div class="window-dots"><i></i><i></i><i></i></div><span>sql/normalizacao.sql · PostgreSQL</span><button id="copySql" class="copy-button">Copiar exemplo</button></div>
+        <pre><code id="sqlSnippet">-- Cada entidade tem sua própria tabela.
+CREATE TABLE clientes (
+    cliente_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    nome       VARCHAR(100) NOT NULL,
+    cidade     VARCHAR(80) NOT NULL
+);
+
+CREATE TABLE pedidos (
+    pedido_id  INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES clientes(cliente_id),
+    data_pedido DATE NOT NULL
+);
+
+CREATE TABLE produtos (
+    produto_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    nome       VARCHAR(100) NOT NULL,
+    preco      NUMERIC(10,2) NOT NULL CHECK (preco >= 0)
+);
+
+CREATE TABLE itens_pedido (
+    pedido_id  INTEGER NOT NULL REFERENCES pedidos(pedido_id),
+    produto_id INTEGER NOT NULL REFERENCES produtos(produto_id),
+    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+    preco_unitario NUMERIC(10,2) NOT NULL CHECK (preco_unitario >= 0),
+    PRIMARY KEY (pedido_id, produto_id)
+);</code></pre>
+        <div class="code-note"><span aria-hidden="true">ⓘ</span> O preço unitário do item é registrado no momento da compra para preservar o histórico mesmo que o preço atual do produto mude.</div>
+      </div>
+      <div class="query-card">
+        <div><span class="query-number">QUERY 01</span><h3>Consultar pedidos com o nome do cliente</h3><p>O JOIN relaciona as tabelas usando as chaves correspondentes.</p></div>
+        <pre><code>SELECT p.pedido_id, c.nome, p.data_pedido
+FROM pedidos AS p
+JOIN clientes AS c
+  ON c.cliente_id = p.cliente_id
+ORDER BY p.pedido_id;</code></pre>
+      </div>
+      <div class="sql-actions"><a class="button button-primary" href="sql/normalizacao.sql" download>Baixar script SQL <span aria-hidden="true">↓</span></a><span>Script completo com dados fictícios e consultas.</span></div>
+    </section>
+
+    <section class="section-wrap content-section" id="cuidados">
+      <div class="section-heading">
+        <div class="eyebrow">05 / BOAS DECISÕES</div>
+        <h2>Normalizar não é apenas dividir tabelas</h2>
+      </div>
+      <div class="tips-grid">
+        <article><span class="tip-number">01</span><h3>Identifique as chaves</h3><p>Entenda o que identifica cada linha e quais atributos dependem dela.</p></article>
+        <article><span class="tip-number">02</span><h3>Preserve os relacionamentos</h3><p>Use chaves estrangeiras e restrições para proteger a integridade referencial.</p></article>
+        <article><span class="tip-number">03</span><h3>Teste o resultado</h3><p>Compare consultas antes e depois. Uma decomposição bem feita deve preservar os dados e evitar combinações incorretas.</p></article>
+      </div>
+      <div class="caution-box"><strong>Limitação a considerar</strong><p>A normalização reduz redundâncias e anomalias, mas não resolve sozinha todos os problemas de desempenho, segurança ou qualidade dos dados. A modelagem depende das regras reais do negócio e deve ser validada com exemplos e consultas.</p></div>
+    </section>
+
+    <section class="quiz-section" id="quiz">
+      <div class="section-wrap quiz-layout">
+        <div class="quiz-intro"><div class="eyebrow">06 / TESTE SEU CONHECIMENTO</div><h2>Você domina as formas normais?</h2><p>Responda a três perguntas rápidas para revisar os conceitos apresentados.</p><div class="quiz-badge">✦ <span>Quiz interativo</span></div></div>
+        <div class="quiz-card" id="quizCard">
+          <div class="quiz-progress"><span id="quizProgressLabel">PERGUNTA 1 DE 3</span><div class="progress-track"><span id="quizProgressBar"></span></div></div>
+          <h3 id="questionText">O que a Primeira Forma Normal (1FN) exige?</h3>
+          <div id="answerOptions" class="answer-options"></div>
+          <div id="quizFeedback" class="quiz-feedback" aria-live="polite"></div>
+          <div class="quiz-controls"><span id="questionCounter">01 / 03</span><button class="button button-primary" id="nextQuestion" disabled>Responder <span aria-hidden="true">→</span></button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-wrap content-section" id="autoria">
+      <div class="section-heading">
+        <div class="eyebrow">07 / AUTORIA</div>
+        <h2>Sobre este projeto</h2>
+        <p>Material educacional independente desenvolvido para demonstrar conceitos de modelagem relacional, SQL e publicação web.</p>
+      </div>
+      <div class="author-card">
+        <div class="author-avatar" aria-hidden="true">DC</div>
+        <div class="author-info"><span class="panel-label">AUTORIA INDIVIDUAL</span><h3>Seu nome completo</h3><p>Estudante de TI · Interesse em banco de dados e desenvolvimento web.</p><div class="author-links"><a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></div><p class="author-reminder">Antes de publicar, substitua este cartão pelos seus dados e links profissionais. Use apenas foto própria ou autorizada e publique os perfis com consentimento.</p></div>
+      </div>
+      <div class="revision-line"><span>Publicado em: 15/10/2026</span><span>Última revisão: 15/10/2026</span><span>Versão 1.0</span></div>
+    </section>
+
+    <section class="section-wrap content-section references-section" id="referencias">
+      <div class="section-heading">
+        <div class="eyebrow">08 / LEITURA COMPLEMENTAR</div>
+        <h2>Referências e próximos passos</h2>
+        <p>Use estas fontes para aprofundar os conceitos e verificar a sintaxe do banco de dados.</p>
+      </div>
+      <div class="reference-list">
+        <a href="https://www.postgresql.org/docs/current/ddl-constraints.html" target="_blank" rel="noopener noreferrer"><span class="reference-index">01</span><div><strong>PostgreSQL — Constraints</strong><p>Documentação oficial sobre chaves primárias, chaves estrangeiras e restrições.</p></div><span class="external-arrow">↗</span></a>
+        <a href="https://www.postgresql.org/docs/current/tutorial.html" target="_blank" rel="noopener noreferrer"><span class="reference-index">02</span><div><strong>PostgreSQL — Tutorial</strong><p>Introdução oficial a tabelas, consultas e SQL no PostgreSQL.</p></div><span class="external-arrow">↗</span></a>
+        <a href="https://sqlbolt.com/" target="_blank" rel="noopener noreferrer"><span class="reference-index">03</span><div><strong>SQLBolt</strong><p>Exercícios interativos para praticar SELECT, JOIN e conceitos de SQL.</p></div><span class="external-arrow">↗</span></a>
+        <a href="https://dev.mysql.com/doc/" target="_blank" rel="noopener noreferrer"><span class="reference-index">04</span><div><strong>MySQL Documentation</strong><p>Referência complementar para comparar recursos e sintaxe entre SGBDs.</p></div><span class="external-arrow">↗</span></a>
+      </div>
+      <div class="observation-box"><h3>Quadro de observação do projeto</h3><p><strong>Referências analisadas:</strong> documentação oficial do PostgreSQL e SQLBolt.</p><p><strong>Decisões adotadas:</strong> (1) usar tabelas fictícias de uma loja para aproximar a teoria de um cenário real; (2) separar clientes, pedidos, produtos e itens; (3) fornecer SQL comentado e consultas verificáveis.</p><p><strong>O que decidimos não fazer:</strong> não criar servidor ou login, pois o objetivo é uma página estática didática e publicável gratuitamente.</p><p class="small-note">Para a entrega acadêmica, registre quais páginas você realmente abriu e analisou e ajuste este quadro de acordo com sua observação.</p></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="section-wrap footer-inner">
+      <a class="brand" href="#inicio"><span class="brand-mark">D<span>.</span></span><span>Data<span class="brand-light">Clean</span></span></a>
+      <p>Organização de dados para aplicações mais confiáveis.</p>
+      <div class="footer-links"><a href="#referencias">Referências</a><a href="sql/normalizacao.sql">Script SQL</a><a href="README.md">README</a></div>
+    </div>
+    <div class="section-wrap footer-bottom"><span>Conteúdo educacional · Dados fictícios</span><span>Licença MIT · <a href="LICENSE">ver licença</a></span></div>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
